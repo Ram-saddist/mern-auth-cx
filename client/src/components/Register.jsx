@@ -17,7 +17,7 @@ export default function Register() {
         e.preventDefault()
         console.log(formData)
         if(formData.password=== formData.confirmPassword){
-             axios.post("http://localhost:2000/api/register",formData)
+             axios.post(`${import.meta.env.VITE_API_URL}/api/register`,formData)
             .then((res)=>{
                 if(res.status===201){
                     alert("Registration successful")
