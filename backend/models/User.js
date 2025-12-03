@@ -12,7 +12,9 @@ const userSchema =mongoose.Schema({
     password:String,
     mobile:Number,
     address:String,
-    gender:String
+    gender:String,
+    resetOtp:String,
+    resetOtpExpires:Date
 })
 
 

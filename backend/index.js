@@ -4,13 +4,12 @@ const cors=require("cors")
 const mongoose =require("mongoose")
 const cookieParser=require("cookie-parser") //npm i cookie-parser
 const authRoutes= require("./routes/auth.js")
-
-
 const dashboardRoutes=require("./routes/dashboard.js")
 require("dotenv").config()
 
 app.use(cors({
-    origin: "https://mern-auth-cx-vai8.onrender.com",
+    // origin: "https://mern-auth-cx-vai8.onrender.com",
+    origin:"http://localhost:5173",
     credentials: true,
 }))
 app.use(express.urlencoded({extended:true}))

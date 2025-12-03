@@ -3,6 +3,8 @@ const router=express.Router()
 const bcrypt = require("bcrypt")
 const jwt =require("jsonwebtoken")
 const User =require("../models/User.js")
+const transporter = require("../utils/mail.js")
+
 const generateTokens = (user) =>{
     const accessToken = jwt.sign(
         {id:user._id,email:user.email},
@@ -96,6 +98,63 @@ router.post("/logout",(req,res)=>{
     res.clearCookie("refreshToken")
     res.status(200).json({"message":"Logged out successfully"})
 })
+
+router.post("/forgot-password", async(req,res)=>{
+    const {email}=req.body
+    const user= await User.findOne({email})
+    if(!user)
+        return res.status(400).json({"message":"user not found"})
+
+    const otp =Math.floor(Math.random()*90000+10000)
+    user.resetOtp=otp
+    user.resetOtpExpires= Date.now()+10*60*1000
+    // hour*min*sec*millisec
+    await user.save()
+    await transporter.sendMail({
+        from:process.env.EMAIL_USER,
+        to:email,
+        subject:"Your OTP for password reset",
+        html:`
+            <h2>Your otp is <b>${otp}</b> </h2> 
+            <p>This otp will expires in 10 minutes</p>
+        `
+    })
+    res.status(200).json({"message":"OTP send successfully"})
+
+})
+
+
+router.post("/verify-otp",async (req,res)=>{
+    const {email, otp}=req.body
+    const user = await User.findOne({email})
+    if(!user){
+        return res.status(400).json({"message":"User not found"})
+    }
+    if(user.resetOtp!==otp || user.resetOtpExpires< Date.now()){
+                              // 1:10 (17)    < 1.11 (18)
+        return res.status(400).json({"message":"invalid"})
+    }
+    return res.status(200).json({"message":"OTP Verified"})
+})
+
+router.post("/reset-password", async(req,res)=>{
+    const {email,password}= req.body
+    console.log(email,password)
+    const user = await User.findOne({email})
+    if(!user)
+        return res.status(400).json({"message":"user not found"})
+
+    const hashedPassword = await bcrypt.hash(password,10)
+
+    user.password=hashedPassword
+    user.resetOtp=undefined
+    user.resetOtpExpires=undefined
+
+    await user.save()
+    res.status(200).json({"message":"Password updated successfully"})
+
+})
+
 
 
 module.exports=router
